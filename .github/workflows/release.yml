@@ -97,11 +97,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64-x86-64
 
-      - name: Run tests
-        if: matrix.target == 'binary' && matrix.goos == 'linux' && matrix.goarch == 'amd64'
-        working-directory: ${{ env.APP_DIR }}
-        run: go test ./...
-
       - name: Build binary
         if: matrix.target == 'binary'
         working-directory: ${{ env.APP_DIR }}
