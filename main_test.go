@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -220,6 +221,24 @@ func TestHandleConnectionDetailsReturnsGroupedDetails(t *testing.T) {
 	}
 	if len(got[0].Chains) != 2 || got[0].Chains[0] != "NodeA" {
 		t.Fatalf("unexpected chains: %+v", got[0])
+	}
+}
+
+func TestEmbeddedIndexDisablesPeriodicAutoRefresh(t *testing.T) {
+	content, err := webAssets.ReadFile("web/index.html")
+	if err != nil {
+		t.Fatalf("read embedded index.html: %v", err)
+	}
+
+	html := string(content)
+	if !strings.Contains(html, `elements.refreshBtn.addEventListener("click", loadData)`) {
+		t.Fatalf("expected manual refresh handler to remain available")
+	}
+	if strings.Contains(html, "setInterval(loadData, 30000)") {
+		t.Fatalf("expected periodic auto refresh to be removed")
+	}
+	if !strings.Contains(html, "updateCustomInputs()\n      updateViewHints()\n      loadData()") {
+		t.Fatalf("expected initial page load to fetch data once")
 	}
 }
 
