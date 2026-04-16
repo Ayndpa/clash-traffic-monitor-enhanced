@@ -31,9 +31,41 @@
 
 ### 本地运行
 
+推荐直接从 [Releases](https://github.com/zhf883680/clash-traffic-monitor/releases/latest) 下载对应平台的二进制文件运行。
+
+#### Windows
+
+下载文件：`traffic-monitor-windows-amd64.exe`
+
+```powershell
+$env:MIHOMO_URL="http://127.0.0.1:9090"
+.\traffic-monitor-windows-amd64.exe
+```
+
+#### Linux
+
+下载文件：
+
+- `traffic-monitor-linux-amd64`
+- `traffic-monitor-linux-arm64`
+
 ```bash
-go build -o traffic-monitor main.go
-MIHOMO_URL=http://127.0.0.1:9090 ./traffic-monitor
+chmod +x ./traffic-monitor-linux-amd64
+MIHOMO_URL=http://127.0.0.1:9090 ./traffic-monitor-linux-amd64
+```
+
+```bash
+chmod +x ./traffic-monitor-linux-arm64
+MIHOMO_URL=http://127.0.0.1:9090 ./traffic-monitor-linux-arm64
+```
+
+#### macOS
+
+下载文件：`traffic-monitor-macos-arm64`
+
+```bash
+chmod +x ./traffic-monitor-macos-arm64
+MIHOMO_URL=http://127.0.0.1:9090 ./traffic-monitor-macos-arm64
 ```
 
 启动后访问：
