@@ -678,40 +678,56 @@ func TestEmbeddedIndexDisablesPeriodicAutoRefresh(t *testing.T) {
 	}
 
 	html := string(content)
-	if !strings.Contains(html, `elements.refreshBtn.addEventListener("click", loadData)`) {
+	if !strings.Contains(html, `href="/styles.css"`) {
+		t.Fatalf("expected embedded index.html to load external stylesheet")
+	}
+	if !strings.Contains(html, `src="/app.js"`) {
+		t.Fatalf("expected embedded index.html to load external app script")
+	}
+	if !strings.Contains(html, `id="statusBanner"`) || !strings.Contains(html, `id="dashboardShell"`) {
+		t.Fatalf("expected embedded index.html to preserve dashboard shell regions")
+	}
+
+	scriptContent, err := webAssets.ReadFile("web/app.js")
+	if err != nil {
+		t.Fatalf("read embedded app.js: %v", err)
+	}
+
+	script := string(scriptContent)
+	if !strings.Contains(script, `elements.refreshBtn.addEventListener("click", loadData)`) {
 		t.Fatalf("expected manual refresh handler to remain available")
 	}
-	if !strings.Contains(html, `elements.range.addEventListener("change", () => {`) {
+	if !strings.Contains(script, `elements.range.addEventListener("change", () => {`) {
 		t.Fatalf("expected range change handler to exist")
 	}
-	if !strings.Contains(html, "if (Number(elements.range.value) !== -1) updateCustomInputs()") {
+	if !strings.Contains(script, "if (Number(elements.range.value) !== -1) updateCustomInputs()") {
 		t.Fatalf("expected preset range change to keep custom inputs in sync")
 	}
-	if !strings.Contains(html, `elements.start.addEventListener("change", () => {`) {
+	if !strings.Contains(script, `elements.start.addEventListener("change", () => {`) {
 		t.Fatalf("expected custom start time change handler to exist")
 	}
-	if !strings.Contains(html, `elements.end.addEventListener("change", () => {`) {
+	if !strings.Contains(script, `elements.end.addEventListener("change", () => {`) {
 		t.Fatalf("expected custom end time change handler to exist")
 	}
-	if !strings.Contains(html, `elements.range.value = "-1"`) {
+	if !strings.Contains(script, `elements.range.value = "-1"`) {
 		t.Fatalf("expected manual datetime edits to switch range into custom mode")
 	}
-	if !strings.Contains(html, `elements.start.addEventListener("change", () => {`) || !strings.Contains(html, `loadData()`) {
+	if !strings.Contains(script, `elements.start.addEventListener("change", () => {`) || !strings.Contains(script, `loadData()`) {
 		t.Fatalf("expected manual time edits to request fresh data")
 	}
-	if strings.Contains(html, "setInterval(loadData, 30000)") {
+	if strings.Contains(script, "setInterval(loadData, 30000)") {
 		t.Fatalf("expected periodic auto refresh to be removed")
 	}
-	if !strings.Contains(html, "await loadSettings()") {
+	if !strings.Contains(script, "await loadSettings()") {
 		t.Fatalf("expected initial page boot to load saved mihomo settings before fetching data")
 	}
-	if !strings.Contains(html, "if (state.settingsRequired)") || !strings.Contains(html, "await loadData()") {
+	if !strings.Contains(script, "if (state.settingsRequired)") || !strings.Contains(script, "await loadData()") {
 		t.Fatalf("expected initial page boot to gate data loading on saved mihomo settings")
 	}
 	if !strings.Contains(html, `id="settingsPanel"`) || !strings.Contains(html, `id="settingsBtn"`) {
 		t.Fatalf("expected embedded index.html to include mihomo settings entry points")
 	}
-	if !strings.Contains(html, `sendJSON("/api/settings/mihomo", "PUT", payload)`) {
+	if !strings.Contains(script, `sendJSON("/api/settings/mihomo", "PUT", payload)`) {
 		t.Fatalf("expected embedded index.html to save mihomo settings through the settings API")
 	}
 	for _, label := range []string{"1 天", "7 天", "15 天", "30 天", "自定义"} {
@@ -733,7 +749,28 @@ func TestEmbeddedIndexIncludesGithubAndLicenseFooter(t *testing.T) {
 	}
 
 	html := string(content)
+	for _, unwanted := range []string{
+		`id="primaryHint"`,
+		`id="secondaryHint"`,
+		`id="detailHint"`,
+		`class="panel-subtitle"`,
+	} {
+		if strings.Contains(html, unwanted) {
+			t.Fatalf("expected embedded index.html to remove verbose helper text marker %q", unwanted)
+		}
+	}
+
 	for _, want := range []string{
+		`id="runtimeSummary"`,
+		`id="selectionPath"`,
+		`id="overviewSection"`,
+		`id="drilldownSection"`,
+		`class="panel card card-count"`,
+		`class="panel card card-upload"`,
+		`class="panel card card-download"`,
+		`class="panel card card-total"`,
+		`id="secondaryTitle"`,
+		`id="detailTitle"`,
 		`href="https://github.com/zhf883680/clash-traffic-monitor"`,
 		`>GitHub<`,
 		`href="/LICENSE"`,
@@ -741,6 +778,71 @@ func TestEmbeddedIndexIncludesGithubAndLicenseFooter(t *testing.T) {
 	} {
 		if !strings.Contains(html, want) {
 			t.Fatalf("expected embedded index.html to contain %q", want)
+		}
+	}
+}
+
+func TestEmbeddedAppScriptIncludesContextualDashboardLabels(t *testing.T) {
+	content, err := webAssets.ReadFile("web/app.js")
+	if err != nil {
+		t.Fatalf("read embedded app.js: %v", err)
+	}
+
+	script := string(content)
+	for _, want := range []string{
+		"function syncContextSummary()",
+		`${primary} 访问的主机`,
+		`${primary} 的访问设备`,
+		`${primary} 命中的目标主机`,
+		`selectionPath: document.getElementById("selectionPath")`,
+		`secondaryTitle: document.getElementById("secondaryTitle")`,
+		`detailTitle: document.getElementById("detailTitle")`,
+		`elements.selectionPath.textContent =`,
+		`elements.secondaryTitle.textContent =`,
+		`elements.secondaryTitle.title =`,
+		`elements.detailTitle.textContent =`,
+		`elements.detailTitle.title =`,
+	} {
+		if !strings.Contains(script, want) {
+			t.Fatalf("expected embedded app.js to contain %q", want)
+		}
+	}
+}
+
+func TestEmbeddedStylesConstrainDashboardHeight(t *testing.T) {
+	content, err := webAssets.ReadFile("web/styles.css")
+	if err != nil {
+		t.Fatalf("read embedded styles.css: %v", err)
+	}
+
+	styles := string(content)
+	for _, want := range []string{
+		"--overview-panel-height:",
+		"height: var(--overview-panel-height);",
+		"grid-template-areas:",
+		`"count total"`,
+		`"upload download"`,
+		".card-upload",
+		"grid-area: upload;",
+		".card-download",
+		"grid-area: download;",
+		".dashboard .panel-title",
+		".secondary-panel .panel-head",
+		"grid-template-columns: minmax(0, 1fr) auto;",
+		"overflow-wrap: anywhere;",
+		"-webkit-line-clamp: 2;",
+		"width: 180px;",
+		".ranking-title .mono",
+		"flex: 1 1 auto;",
+		".ranking-total",
+		"flex: 0 0 auto;",
+		".ranking-list",
+		".detail-table-wrap",
+		".detail-cards-shell",
+		"overflow: auto",
+	} {
+		if !strings.Contains(styles, want) {
+			t.Fatalf("expected embedded styles.css to contain %q", want)
 		}
 	}
 }
@@ -766,6 +868,38 @@ func TestRoutesServeLicense(t *testing.T) {
 		if !strings.Contains(rec.Body.String(), want) {
 			t.Fatalf("expected license response to contain %q", want)
 		}
+	}
+}
+
+func TestRoutesServeEmbeddedStaticAssets(t *testing.T) {
+	svc := newTestService(t)
+
+	tests := []struct {
+		path        string
+		contentType string
+		bodyNeedle  string
+	}{
+		{path: "/styles.css", contentType: "text/css", bodyNeedle: ":root"},
+		{path: "/app.js", contentType: "javascript", bodyNeedle: "loadSettings"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
+			rec := httptest.NewRecorder()
+
+			svc.routes().ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("unexpected status: %d body=%s", rec.Code, rec.Body.String())
+			}
+			if contentType := rec.Header().Get("Content-Type"); !strings.Contains(contentType, tc.contentType) {
+				t.Fatalf("expected %s content type for %s, got %q", tc.contentType, tc.path, contentType)
+			}
+			if !strings.Contains(rec.Body.String(), tc.bodyNeedle) {
+				t.Fatalf("expected %s response to contain %q", tc.path, tc.bodyNeedle)
+			}
+		})
 	}
 }
 
