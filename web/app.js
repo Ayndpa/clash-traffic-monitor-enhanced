@@ -25,6 +25,8 @@ const drilldownConfig = {
   },
 }
 
+const DIMENSION_STORAGE_KEY = "traffic-monitor:selected-dimension"
+
 const elements = {
   dimension: document.getElementById("dimension"),
   dimensionTabs: Array.from(document.querySelectorAll(".dimension-tab")),
@@ -85,6 +87,30 @@ const state = {
   },
   settingsOpen: false,
   settingsRequired: false,
+}
+
+function isValidDimension(value) {
+  return Object.prototype.hasOwnProperty.call(drilldownConfig, value)
+}
+
+function loadStoredDimension() {
+  try {
+    const value = window.localStorage.getItem(DIMENSION_STORAGE_KEY)
+    return isValidDimension(value) ? value : null
+  } catch (error) {
+    console.warn("Failed to load stored dimension", error)
+    return null
+  }
+}
+
+function persistSelectedDimension(value) {
+  if (!isValidDimension(value)) return
+
+  try {
+    window.localStorage.setItem(DIMENSION_STORAGE_KEY, value)
+  } catch (error) {
+    console.warn("Failed to persist selected dimension", error)
+  }
 }
 
 function nowLocalInputValue(offsetMs) {
@@ -864,6 +890,7 @@ elements.dimensionTabs.forEach((button) => {
     const nextDimension = button.dataset.dimension
     if (!nextDimension || nextDimension === elements.dimension.value) return
     elements.dimension.value = nextDimension
+    persistSelectedDimension(nextDimension)
     updateViewHints()
     loadData()
   })
@@ -936,6 +963,13 @@ window.addEventListener("resize", () => {
 })
 
 async function initializeApp() {
+  const storedDimension = loadStoredDimension()
+  if (storedDimension) {
+    elements.dimension.value = storedDimension
+  } else {
+    persistSelectedDimension(elements.dimension.value)
+  }
+
   updateCustomInputs()
   updateViewHints()
   renderCards([])
