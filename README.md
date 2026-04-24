@@ -1,4 +1,4 @@
-# Traffic Monitor
+# Traffic Monitor Enhanced
 
 `Traffic Monitor` 是一个独立运行的 Clash 流量监控服务。
 
@@ -9,17 +9,17 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/zhf883680/clash-traffic-monitor/stargazers">
-    <img src="https://img.shields.io/github/stars/zhf883680/clash-traffic-monitor?style=flat-square&color=yellow" alt="Stars" />
+  <a href="https://github.com/Ayndpa/clash-traffic-monitor-enhanced/stargazers">
+    <img src="https://img.shields.io/github/stars/Ayndpa/clash-traffic-monitor-enhanced?style=flat-square&color=yellow" alt="Stars" />
   </a>
-  <a href="https://hub.docker.com/r/zhf883680/clash-traffic-monitor">
-    <img src="https://img.shields.io/docker/pulls/zhf883680/clash-traffic-monitor?style=flat-square&color=2496ED&logo=docker" alt="Docker Pulls" />
+  <a href="https://hub.docker.com/r/Ayndpa/clash-traffic-monitor-enhanced">
+    <img src="https://img.shields.io/docker/pulls/Ayndpa/clash-traffic-monitor-enhanced?style=flat-square&color=2496ED&logo=docker" alt="Docker Pulls" />
   </a>
-  <a href="https://hub.docker.com/r/zhf883680/clash-traffic-monitor">
-    <img src="https://img.shields.io/docker/v/zhf883680/clash-traffic-monitor?style=flat-square&label=Docker&color=2496ED" alt="Docker Version" />
+  <a href="https://hub.docker.com/r/Ayndpa/clash-traffic-monitor-enhanced">
+    <img src="https://img.shields.io/docker/v/Ayndpa/clash-traffic-monitor-enhanced?style=flat-square&label=Docker&color=2496ED" alt="Docker Version" />
   </a>
-  <a href="https://hub.docker.com/r/zhf883680/clash-traffic-monitor">
-    <img src="https://img.shields.io/docker/image-size/zhf883680/clash-traffic-monitor/latest?style=flat-square&logo=docker" alt="Image Size" />
+  <a href="https://hub.docker.com/r/Ayndpa/clash-traffic-monitor-enhanced">
+    <img src="https://img.shields.io/docker/image-size/Ayndpa/clash-traffic-monitor-enhanced/latest?style=flat-square&logo=docker" alt="Image Size" />
   </a>
 </p>
 
@@ -76,7 +76,7 @@
 
 ### 本地运行
 
-推荐直接从 [Releases](https://github.com/zhf883680/clash-traffic-monitor/releases/latest) 下载对应平台的二进制文件运行。
+推荐直接从 [Releases](https://github.com/Ayndpa/clash-traffic-monitor-enhanced/releases/latest) 下载对应平台的二进制文件运行。
 
 #### Windows
 
@@ -144,7 +144,7 @@ docker run -d \
   -e MIHOMO_URL=http://host.docker.internal:9090 \
   -e MIHOMO_SECRET=your-secret \
   -v "$(pwd)/data:/data" \
-  zhf883680/clash-traffic-monitor:latest
+  zhf883680/clash-traffic-monitor-enhanced:latest
 ```
 
 如果 Mihomo 没有设置密钥，可以把 `MIHOMO_SECRET` 留空。
