@@ -170,7 +170,6 @@ type aggregatedEntry struct {
 }
 
 func main() {
-	hideConsoleWindow()
 	systray.Run(onReady, onExit)
 }
 
