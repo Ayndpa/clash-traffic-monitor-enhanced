@@ -11,7 +11,7 @@ COPY main.go ./
 COPY LICENSE ./
 COPY web ./web
 
-RUN CGO_ENABLED=1 GOOS=linux go build -o traffic-monitor-enhanced main.go
+RUN CGO_ENABLED=1 GOOS=linux go build -o traffic-monitor-enhanced .
 
 FROM alpine:latest
 
@@ -21,6 +21,6 @@ WORKDIR /root/
 
 COPY --from=builder /app/traffic-monitor-enhanced .
 
-EXPOSE 8080
+EXPOSE 9091
 
 CMD ["./traffic-monitor-enhanced"]

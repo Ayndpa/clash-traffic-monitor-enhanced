@@ -9,7 +9,7 @@
 docker run -d \
   --name traffic-monitor \
   --restart unless-stopped \
-  -p 8080:8080 \
+  -p 9091:9091 \
   -e MIHOMO_URL=http://host.docker.internal:9090 \
   -e MIHOMO_SECRET=your-secret \
   -v "$(pwd)/data:/data" \
@@ -19,7 +19,7 @@ docker run -d \
 启动后访问：
 
 ```text
-http://localhost:8080/
+http://localhost:9091/
 ```
 
 ## 常用环境变量

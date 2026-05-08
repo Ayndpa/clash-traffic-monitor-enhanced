@@ -114,15 +114,17 @@ chmod +x ./traffic-monitor-macos-arm64
 
 如果你是从源码本地编译，也可以直接这样运行：
 
-```bash
-go build -o traffic-monitor main.go
-./traffic-monitor
+```powershell
+go build -ldflags="-s -w -H windowsgui" -o traffic-monitor.exe .
+.\traffic-monitor.exe
 ```
+
+如果你是在 Windows 上本地编译，`-H windowsgui` 可以避免启动时弹出黑色控制台窗口。
 
 启动后访问：
 
 ```text
-http://localhost:8080/
+http://localhost:9091/
 ```
 
 如果本地还没有保存过 Mihomo 配置，首次打开页面会提示填写：
@@ -140,7 +142,7 @@ mkdir -p data
 docker run -d \
   --name traffic-monitor \
   --restart unless-stopped \
-  -p 8080:8080 \
+  -p 9091:9091 \
   -e MIHOMO_URL=http://host.docker.internal:9090 \
   -e MIHOMO_SECRET=your-secret \
   -v "$(pwd)/data:/data" \
@@ -161,7 +163,7 @@ docker run -d \
 | --- | --- | --- |
 | `MIHOMO_URL` | 空 | 启动时优先使用的 Mihomo Controller 地址；未设置时可在页面首次打开后填写 |
 | `MIHOMO_SECRET` | 空 | Mihomo Bearer Token |
-| `TRAFFIC_MONITOR_LISTEN` | `:8080` | 服务监听地址 |
+| `TRAFFIC_MONITOR_LISTEN` | `:9091` | 服务监听地址 |
 
 ## 存储策略
 

@@ -109,7 +109,11 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
           OUTPUT_NAME=traffic-monitor-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
           echo "Building $OUTPUT_NAME version $VERSION"
-          go build -ldflags="-s -w" -o "./$OUTPUT_NAME" main.go
+          LDFLAGS="-s -w"
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            LDFLAGS="$LDFLAGS -H windowsgui"
+          fi
+          go build -ldflags="$LDFLAGS" -o "./$OUTPUT_NAME" .
           chmod +x "./$OUTPUT_NAME" || true
 
       - name: Upload to Release
@@ -155,7 +159,7 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
           OUTPUT_NAME=traffic-monitor-macos-arm64
           echo "Building $OUTPUT_NAME version $VERSION"
-          go build -ldflags="-s -w" -o "./$OUTPUT_NAME" main.go
+          go build -ldflags="-s -w" -o "./$OUTPUT_NAME" .
           chmod +x "./$OUTPUT_NAME"
 
       - name: Upload macOS binary to Release

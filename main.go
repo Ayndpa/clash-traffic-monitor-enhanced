@@ -5,15 +5,20 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	_ "image/jpeg"
+	"image/png"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,13 +32,13 @@ import (
 )
 
 //go:embed icon.png
-var trayIcon []byte
+var trayIconAsset []byte
 
 //go:embed LICENSE web/*
 var webAssets embed.FS
 
 const (
-	defaultListenAddr      = ":8080"
+	defaultListenAddr      = ":9091"
 	defaultPollInterval    = 5 * time.Second
 	aggregateFlushInterval = 10 * time.Minute
 	aggregateRetention     = 30 * 24 * time.Hour
@@ -165,6 +170,7 @@ type aggregatedEntry struct {
 }
 
 func main() {
+	hideConsoleWindow()
 	systray.Run(onReady, onExit)
 }
 
@@ -194,7 +200,7 @@ func onReady() {
 		aggregateBuffer: make(map[string]*aggregatedEntry),
 	}
 
-	systray.SetIcon(trayIcon)
+	systray.SetIcon(trayIconBytes())
 	systray.SetTitle("Traffic Monitor")
 	systray.SetTooltip("Clash Traffic Monitor")
 
@@ -272,6 +278,82 @@ func onReady() {
 }
 
 var systrayOnExit func()
+
+func trayIconBytes() []byte {
+	if runtime.GOOS != "windows" {
+		return trayIconAsset
+	}
+
+	ico, err := windowsTrayIconBytes(trayIconAsset)
+	if err != nil {
+		log.Printf("build tray icon for windows: %v", err)
+		return trayIconAsset
+	}
+
+	return ico
+}
+
+func windowsTrayIconBytes(pngData []byte) ([]byte, error) {
+	src, _, err := image.Decode(bytes.NewReader(pngData))
+	if err != nil {
+		return nil, err
+	}
+
+	const iconSize = 256
+	dst := image.NewRGBA(image.Rect(0, 0, iconSize, iconSize))
+	sb := src.Bounds()
+	sw := sb.Dx()
+	sh := sb.Dy()
+	if sw == 0 || sh == 0 {
+		return nil, fmt.Errorf("tray icon source image is empty")
+	}
+
+	for y := 0; y < iconSize; y++ {
+		sy := sb.Min.Y + (y*sh)/iconSize
+		for x := 0; x < iconSize; x++ {
+			sx := sb.Min.X + (x*sw)/iconSize
+			dst.Set(x, y, src.At(sx, sy))
+		}
+	}
+
+	var pngBuf bytes.Buffer
+	if err := png.Encode(&pngBuf, dst); err != nil {
+		return nil, err
+	}
+
+	imageData := pngBuf.Bytes()
+	var ico bytes.Buffer
+	if err := binary.Write(&ico, binary.LittleEndian, uint16(0)); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(&ico, binary.LittleEndian, uint16(1)); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(&ico, binary.LittleEndian, uint16(1)); err != nil {
+		return nil, err
+	}
+	ico.WriteByte(0)
+	ico.WriteByte(0)
+	ico.WriteByte(0)
+	ico.WriteByte(0)
+	if err := binary.Write(&ico, binary.LittleEndian, uint16(1)); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(&ico, binary.LittleEndian, uint16(32)); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(&ico, binary.LittleEndian, uint32(len(imageData))); err != nil {
+		return nil, err
+	}
+	if err := binary.Write(&ico, binary.LittleEndian, uint32(6+16)); err != nil {
+		return nil, err
+	}
+	if _, err := ico.Write(imageData); err != nil {
+		return nil, err
+	}
+
+	return ico.Bytes(), nil
+}
 
 func onExit() {
 	if systrayOnExit != nil {

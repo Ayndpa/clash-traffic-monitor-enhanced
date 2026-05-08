@@ -129,8 +129,8 @@ func TestLoadConfigDefaultsRetentionPolicy(t *testing.T) {
 		t.Fatalf("loadConfig: %v", err)
 	}
 
-	if cfg.ListenAddr != ":8080" {
-		t.Fatalf("expected listen addr default to be :8080, got %q", cfg.ListenAddr)
+	if cfg.ListenAddr != ":9091" {
+		t.Fatalf("expected listen addr default to be :9091, got %q", cfg.ListenAddr)
 	}
 	if cfg.MihomoURL != "" {
 		t.Fatalf("expected mihomo url default to be empty, got %q", cfg.MihomoURL)
@@ -221,6 +221,23 @@ func TestDefaultDatabasePathUsesContainerDataDir(t *testing.T) {
 
 	if defaultDatabasePath() != "/data/traffic_monitor.db" {
 		t.Fatalf("expected container default database path to be /data/traffic_monitor.db, got %q", defaultDatabasePath())
+	}
+}
+
+func TestWindowsTrayIconBytesBuildsICO(t *testing.T) {
+	ico, err := windowsTrayIconBytes(trayIconAsset)
+	if err != nil {
+		t.Fatalf("windowsTrayIconBytes: %v", err)
+	}
+
+	if len(ico) < 22 {
+		t.Fatalf("ico payload too small: %d", len(ico))
+	}
+	if !bytes.Equal(ico[:6], []byte{0x00, 0x00, 0x01, 0x00, 0x01, 0x00}) {
+		t.Fatalf("unexpected ico header: %v", ico[:6])
+	}
+	if !bytes.Contains(ico, []byte{0x89, 0x50, 0x4E, 0x47}) {
+		t.Fatalf("expected embedded PNG payload in ico")
 	}
 }
 
